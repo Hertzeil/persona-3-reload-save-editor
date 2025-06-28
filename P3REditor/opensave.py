@@ -1,5 +1,5 @@
-from P3REditor.Encryption import Encryption
-from P3REditor.P3RSave import P3RSave
+from P3REditor.encryption import Encryption
+from P3REditor.p3rsave import P3RSave
 
 from SavConverter import sav_to_json, read_sav
 import os, tempfile

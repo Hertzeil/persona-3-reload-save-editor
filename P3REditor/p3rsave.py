@@ -1,6 +1,6 @@
 import json, binascii, time, os, tempfile
 
-from P3REditor.Encryption import Encryption
+from P3REditor.encryption import Encryption
 from SavConverter import json_to_sav, load_json
 
 
