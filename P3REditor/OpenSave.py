@@ -9,9 +9,11 @@ class OpenSave:
     def __init__(self):
         pass
 
-    def Load(self, i, mdd, e, make_bak):
+    @staticmethod
+    def load(folder_path, mdd, file_name, make_bak):
+        target = os.path.join(folder_path, file_name)
         try:
-            dec_data = Encryption().XORshift(i + "\\" + e, "ae5zeitaix1joowooNgie3fahP5Ohph", "dec")
+            dec_data = Encryption().XORshift(target, "ae5zeitaix1joowooNgie3fahP5Ohph", "dec")
             with tempfile.NamedTemporaryFile(mode='wb', suffix='.sav', delete=False) as temp_file:
                 temp_file.write(dec_data)
                 temp_file_path = temp_file.name
@@ -21,7 +23,7 @@ class OpenSave:
             comp = True
         except:
             os.remove(temp_file_path)
-            dec_data = open(i + "\\" + e, "rb").read()
+            dec_data = open(target, "rb").read()
             with tempfile.NamedTemporaryFile(mode='wb', suffix='.sav', delete=False) as temp_file:
                 temp_file.write(dec_data)
                 temp_file_path = temp_file.name
@@ -34,4 +36,4 @@ class OpenSave:
             temp_file.write(json_data)
             temp_file_path = temp_file.name
             temp_file.flush()
-        return P3RSave(temp_file_path, mdd, i, e, make_bak, comp)
+        return P3RSave(temp_file_path, mdd, folder_path, file_name, make_bak, comp)
