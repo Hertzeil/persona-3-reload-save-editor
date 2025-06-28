@@ -1,11 +1,17 @@
 # Persona3 Reload | Save Editor
+
 ![Python3](https://img.shields.io/badge/python-3.10-blue?logo=python)
+
 > Tool to edit savefiles for Persona 3 Reload \
 Edit your save file with relative ease : change money, names, characters stats, playtime, social rank and world position...
+
+> **DISCLAIMER :** I don't know Python. Use this tool at your own risk. 
 
 ## Usage
 ```shell
 $> python3 main.py Yoursavefile.sav
+Type help to see usages
+P3REditor> 
 ```
 
 Copy your save file in the folder next to the main.py file \

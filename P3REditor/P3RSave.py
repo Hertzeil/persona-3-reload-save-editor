@@ -16,8 +16,9 @@ class P3RSave:
         os.remove(i)
         self.LoadData()
         if mdd == 0:
+            print('Type help to see usages')
             while True:
-                command = input("(type help to see comand): ").lower()
+                command = input("P3REditor> ").lower()
                 if command == None:
                     pass
                 elif command == "edit lastname":
