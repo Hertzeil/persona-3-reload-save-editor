@@ -1,25 +1,27 @@
-import json, binascii, time, os, tempfile
+import json, binascii, time, os, tempfile, logging
 
 from P3REditor.encryption import Encryption
 from SavConverter import json_to_sav, load_json
 
 
 class P3RSave:
-    def __init__(self, i, mdd, ww, qq, make_bak, comp):
+    def __init__(self, temp_file_path, mdd, folder_path, file_name, make_bak, comp):
         self.padding = {"UInt32Property": "04000000", "Int8Property": "01000000", "UInt16Property": "02000000"}
         self.encrypted = comp
         self.make_bak_file = make_bak
-        self.filenamestart = ww
-        self.filenameend = qq
-        with open(i, "r") as f:
+        self.folder_path = folder_path
+        self.file_name = file_name
+
+        logging.debug(temp_file_path)
+        with open(temp_file_path, "r") as f:
             self.js = json.load(f)
-        os.remove(i)
+        os.remove(temp_file_path)
         self.LoadData()
         if mdd == 0:
             print('Type help to see usages')
             while True:
                 command = input("P3REditor> ").lower()
-                if command == None:
+                if command is None:
                     pass
                 elif command == "edit lastname":
                     self.LastName()
@@ -62,24 +64,30 @@ class P3RSave:
                                 pass
                 elif command == "print":
                     print("")
-                    for i in self.SaveHeader.keys():
-                        if not "len" in i.lower():
-                            print(i)
-                    for i in self.Data.keys():
-                        print(i)
+                    for temp_file_path in self.SaveHeader.keys():
+                        if not "len" in temp_file_path.lower():
+                            print(temp_file_path)
+                    for temp_file_path in self.Data.keys():
+                        print(temp_file_path)
                 elif command == "json":
                     with open("n_json.txt", "w") as f:
                         json.dump(self.js, f, indent=4)
                 elif command == "save":
                     self.SaveChange()
                 elif command == "help":
-                    print("")
-                    print(
-                        "exit|quit : to exit\nsave : save edited data in the save file\nprint : show editable value\nedit 'value_name' : edit the value of 'value_name'\nget 'value_name' : get the value of 'value_name'")
+                    print("""Usage:
+    exit|quit : to exit
+    save : save edited data in the save file
+    print : show editable value
+    edit 'value_name' : edit the value of 'value_name'
+    get 'value_name' : get the value of 'value_name'
+                        """)
                 elif command == "exit" or command == "quit":
                     break
                 else:
-                    print("Invalid | type help to see possible commnad/value to modify")
+                    print("ERROR : Unknown command")
+                    print("Try 'help' for more information.")
+                print('')
 
     def LoadData(self):
         self.filename = self.LoadByName(self.js[1]["value"], "SaveSlotName", 1, 1)
@@ -90,7 +98,7 @@ class P3RSave:
         self.SaveHeader["LenLastName"] = len(self.SaveHeader["lastname"])
         self.SaveHeader["LenFirstName"] = len(self.SaveHeader["firstname"])
         self.Data = {}
-        self.Data["money"] = self.LoadByNameN(self.js, "UInt32Property", 0, 7257)
+        self.Data["money"] = self.LoadByNameN(self.js, "UInt32Property", 0, 7261)
         self.Data["playtime"] = self.LoadByNameN(self.js, "UInt32Property", 0, 12832)
         self.Data["characters"] = {
             self.SaveHeader["firstname"].lower(): {"current_pv": 13070, "current_pc": 13071, "level": 13074,
@@ -123,27 +131,30 @@ class P3RSave:
         with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as temp_file:
             json.dump(self.js, temp_file, indent=2)
             temp_file_path = temp_file.name
-            temp_file.flush
+            temp_file.flush()
         binary_save = json_to_sav(load_json(temp_file_path))
 
         os.remove(temp_file_path)
-        if self.encrypted == True:
+        if self.encrypted:
             with tempfile.NamedTemporaryFile(mode='wb', suffix='.sav', delete=False) as temp_file:
                 temp_file.write(binary_save)
                 temp_file_path = temp_file.name
-                temp_file.flush
-            enc_data = Encryption().XORshift(temp_file_path, "ae5zeitaix1joowooNgie3fahP5Ohph", "enc")
+                temp_file.flush()
+            enc_data = Encryption().xor_shift(temp_file_path, "ae5zeitaix1joowooNgie3fahP5Ohph", "enc")
             os.remove(temp_file_path)
         else:
             enc_data = binary_save
-        if self.make_bak_file == True:
-            if os.path.isdir(self.filenamestart + "\\backup") == False:
-                os.mkdir(self.filenamestart + "\\backup")
-            with open(f"{self.filenamestart}\\{self.filenameend}", "rb") as fr:
+        backup_folder = os.path.join(self.folder_path, "backup")
+        backup_file = os.path.join(backup_folder, str(int(time.time())) + '_' + self.file_name)
+        final_file = os.path.join(self.folder_path, self.file_name)
+        if self.make_bak_file:
+            if not os.path.isdir(backup_folder):
+                os.mkdir(backup_folder)
+            with open(final_file, "rb") as fr:
                 back_data = fr.read()
-            with open(f"{self.filenamestart}\\backup\\{str(int(time.time())) + '_' + self.filenameend}", "wb") as fb:
+            with open(backup_file, "wb") as fb:
                 fb.write(back_data)
-        with open(f"{self.filenamestart}\\{self.filenameend}", "wb") as f:
+        with open(final_file, "wb") as f:
             f.write(enc_data)
 
     def int_to_hex(self, int_value):
@@ -283,7 +294,7 @@ class P3RSave:
         return int.from_bytes(binascii.unhexlify(strr), byteorder="little")
 
     def split_string(self, string, nbr, val=False):
-        if val == True:
+        if val:
             string = binascii.hexlify(string.encode()).decode()
         new_lst = []
         iq = 0
@@ -304,12 +315,12 @@ class P3RSave:
     def LastName(self):
         while True:
             new_name = input("New LastName (10 char max | put nothing to cancel): ")
-            if len(new_name) <= 10 and len(new_name) > 0:
+            if 10 >= len(new_name) > 0:
                 aaa = True
                 for i in new_name:
                     if len(binascii.hexlify(i.encode()).decode()) > 2:
                         aaa = False
-                if aaa == True:
+                if aaa:
                     self.js[1]["value"] = self.SaveByName(self.js[1]["value"], "LastName", 1, 1, new_name,
                                                           "Int8Property", self.SaveHeader["LenLastName"],
                                                           '{"type": "Int8Property", "name": name,"padding_static":static,"padding":self.int_to_hex(x_hex), "value": ord(nvar[c - 1])}')
@@ -333,12 +344,12 @@ class P3RSave:
     def FirstName(self):
         while True:
             new_name = input("New FirstName (10 char max | put nothing to cancel): ")
-            if len(new_name) <= 10 and len(new_name) > 0:
+            if 10 >= len(new_name) > 0:
                 aaa = True
                 for i in new_name:
                     if len(binascii.hexlify(i.encode()).decode()) > 2:
                         aaa = False
-                if aaa == True:
+                if aaa:
                     self.js[1]["value"] = self.SaveByName(self.js[1]["value"], "FirstName", 1, 1, new_name,
                                                           "Int8Property", self.SaveHeader["LenFirstName"],
                                                           '{"type": "Int8Property", "name": name,"padding_static":static,"padding":self.int_to_hex(x_hex), "value": ord(nvar[c - 1])}')
@@ -1112,8 +1123,8 @@ class P3RSave:
             try:
                 new_name = input("New Money (9999999 max | put nothing to cancel): ")
                 new_name = int(new_name)
-                if new_name >= 0 and new_name <= 9999999:
-                    self.js = self.SaveByNameN(self.js, "UInt32Property", 0, new_name, 7257)
+                if 0 <= new_name <= 9999999:
+                    self.js = self.SaveByNameN(self.js, "UInt32Property", 0, new_name, 7261)
                     self.Data["money"] = new_name
                     print(new_name)
                     break

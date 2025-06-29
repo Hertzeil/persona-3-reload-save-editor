@@ -1,4 +1,6 @@
 /.idea
+/backup/*
+!/backup/.gitkeep
 /P3REditor/__pycache__/
 /SavConverter/__pycache__/
-SaveData001.sav
+SaveData*.sav

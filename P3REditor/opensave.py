@@ -13,7 +13,7 @@ class OpenSave:
     def load(folder_path, mdd, file_name, make_bak):
         target = os.path.join(folder_path, file_name)
         try:
-            dec_data = Encryption().XORshift(target, "ae5zeitaix1joowooNgie3fahP5Ohph", "dec")
+            dec_data = Encryption().xor_shift(target, "ae5zeitaix1joowooNgie3fahP5Ohph", "dec")
             with tempfile.NamedTemporaryFile(mode='wb', suffix='.sav', delete=False) as temp_file:
                 temp_file.write(dec_data)
                 temp_file_path = temp_file.name

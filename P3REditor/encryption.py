@@ -5,7 +5,8 @@ class Encryption:
     def __init__(self):
         pass
 
-    def XORshift(self, file, key, mode):
+    @staticmethod
+    def xor_shift(file, key, mode):
         keylen = len(key)
         with open(file, 'rb') as f:
             data1 = f.read()
