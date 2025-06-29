@@ -90,25 +90,25 @@ class P3RSave:
                 print('')
 
     def LoadData(self):
-        self.filename = self.LoadByName(self.js[1]["value"], "SaveSlotName", 1, 1)
+        self.filename = self.load_by_name(self.js[1]["value"], "SaveSlotName", 1, 1)
         self.SaveHeader = {}
 
-        self.SaveHeader["lastname"] = self.LoadByName(self.js[1]["value"], "LastName", 1, 1)
-        self.SaveHeader["firstname"] = self.LoadByName(self.js[1]["value"], "FirstName", 1, 1)
+        self.SaveHeader["lastname"] = self.load_by_name(self.js[1]["value"], "LastName", 1, 1)
+        self.SaveHeader["firstname"] = self.load_by_name(self.js[1]["value"], "FirstName", 1, 1)
         self.SaveHeader["LenLastName"] = len(self.SaveHeader["lastname"])
         self.SaveHeader["LenFirstName"] = len(self.SaveHeader["firstname"])
         self.Data = {}
-        self.Data["money"] = self.LoadByNameN(self.js, "UInt32Property", 0, 7261)
-        self.Data["playtime"] = self.LoadByNameN(self.js, "UInt32Property", 0, 12832)
+        self.Data["money"] = self.load_by_name_n(self.js, "UInt32Property", 0, 7261)
+        self.Data["playtime"] = self.load_by_name_n(self.js, "UInt32Property", 0, 12832)
         self.Data["characters"] = {
             self.SaveHeader["firstname"].lower(): {"current_pv": 13070, "current_pc": 13071, "level": 13074,
                                                    "exp": 13075},
             "yukari": {"current_pv": 13246, "current_pc": 13247, "level": 13263, "exp": 13264},
             "junpei": {"current_pv": 13422, "current_pc": 13423, "level": 13439, "exp": 13440}}
-        self.Data["dangerous"] = {"player_x": self.LoadByNameN(self.js, "UInt32Property", 0, 5219),
-                                  "player_y": self.LoadByNameN(self.js, "UInt32Property", 0, 5220),
-                                  "player_direction": self.LoadByNameN(self.js, "UInt32Property", 0,
-                                                                       5218)}  # "player_z":self.LoadByNameN(self.js, "UInt32Property", 0,5221)}
+        self.Data["dangerous"] = {"player_x": self.load_by_name_n(self.js, "UInt32Property", 0, 5219),
+                                  "player_y": self.load_by_name_n(self.js, "UInt32Property", 0, 5220),
+                                  "player_direction": self.load_by_name_n(self.js, "UInt32Property", 0,
+                                                                          5218)}  # "player_z":self.LoadByNameN(self.js, "UInt32Property", 0,5221)}
         self.Data["socialrank"] = {"academics": 5352, "charm": 5354, "courage": 5356}
         self.Data["date"] = {"time": 1929, "day": 1928}  # dayskip = 1930
         self.Data["personavalueid"] = {"persona": [13086, 13098, 13110, 13122, 13134, 13146, 13158],
@@ -157,10 +157,12 @@ class P3RSave:
         with open(final_file, "wb") as f:
             f.write(enc_data)
 
-    def int_to_hex(self, int_value):
+    @staticmethod
+    def int_to_hex(int_value):
         return ''.join([(hex(int_value)[2:].zfill(8))[i:i + 2] for i in range(6, -2, -2)])
 
-    def debug_GetIdByValue(self, js, name, header, value):
+    @staticmethod
+    def debug_get_id_by_value(js, name, header, value):
         d = []
         if header == 0:
             for i in js[:]:
@@ -169,14 +171,14 @@ class P3RSave:
                         d.append((int.from_bytes(binascii.unhexlify(i["padding"]), byteorder="little")))
         return d
 
-    def SaveByNameN(self, js, name, header, nvar, n, after=None):
+    def save_by_name_n(self, js, name, header, nvar, n, after=None):
         xx = False
         padd = 0
         if header == 0:
             for i in js[:]:
                 padd += 1
                 if i["type"] == name:
-                    if xx == True:
+                    if xx:
                         js.insert(padd, {
                             "type": "UInt32Property",
                             "name": "SaveDataArea",
@@ -190,7 +192,7 @@ class P3RSave:
                         return js
                     elif int.from_bytes(binascii.unhexlify(str(i["padding"])), byteorder="little") == after:
                         xx = True
-        if after == None:
+        if after is None:
             js.insert(len(js) - 1, {
                 "type": "UInt32Property",
                 "name": "SaveDataArea",
@@ -200,7 +202,8 @@ class P3RSave:
             })
         return js
 
-    def DelByNameN(self, js, name, header, n):
+    @staticmethod
+    def del_by_name_n(js, name, header, n):
         if header == 0:
             for i in js[:]:
                 if i["type"] == name:
@@ -208,11 +211,7 @@ class P3RSave:
                         js.remove(i)
             return js
 
-    def SaveByName(self, js, name, mode, header, nvar, typee, lenn=None, dummy=None):
-        c = 0
-        d = 0
-        r = False
-        x_hex = -1
+    def save_by_name(self, js, name, mode, header, nvar, typee, lenn=None, dummy=None):
         for i in js[:]:
             try:
                 if i["name"] == name:
@@ -247,7 +246,8 @@ class P3RSave:
                 pass
         return js
 
-    def LoadByNameN(self, js, name, header, n):
+    @staticmethod
+    def load_by_name_n(js, name, header, n):
         if header == 0:
             for i in js[:]:
                 if i["type"] == name:
@@ -255,7 +255,8 @@ class P3RSave:
                         return i["value"]
         return None
 
-    def LoadByName(self, js, name, mode, header):
+    @staticmethod
+    def load_by_name(js, name, mode, header):
         tmp = []
         c = 0
         for i in js:
@@ -287,13 +288,15 @@ class P3RSave:
             return binascii.unhexlify(tmp)
         return None
 
-    def str_to_int(self, i):
+    @staticmethod
+    def str_to_int(i):
         strr = ""
         for a in i:
             strr += hex(ord(a))[2:].zfill(2)
         return int.from_bytes(binascii.unhexlify(strr), byteorder="little")
 
-    def split_string(self, string, nbr, val=False):
+    @staticmethod
+    def split_string(string, nbr, val=False):
         if val:
             string = binascii.hexlify(string.encode()).decode()
         new_lst = []
@@ -321,7 +324,7 @@ class P3RSave:
                     if len(binascii.hexlify(i.encode()).decode()) > 2:
                         aaa = False
                 if aaa:
-                    self.js[1]["value"] = self.SaveByName(self.js[1]["value"], "LastName", 1, 1, new_name,
+                    self.js[1]["value"] = self.save_by_name(self.js[1]["value"], "LastName", 1, 1, new_name,
                                                           "Int8Property", self.SaveHeader["LenLastName"],
                                                           '{"type": "Int8Property", "name": name,"padding_static":static,"padding":self.int_to_hex(x_hex), "value": ord(nvar[c - 1])}')
                     self.SaveHeader["lastname"] = new_name
@@ -329,13 +332,13 @@ class P3RSave:
                     new_name = self.split_string(new_name, 8, True)
                     counter = 0
                     for i in [0, 0, 0, 0, 0, 0, 0, 0]:
-                        self.js = self.DelByNameN(self.js, "UInt32Property", 0, 17950 + counter)
+                        self.js = self.del_by_name_n(self.js, "UInt32Property", 0, 17950 + counter)
                     counter = 0
                     for i in new_name:
                         counter += 1
-                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0,
-                                                   int.from_bytes(binascii.unhexlify(i), byteorder="little"),
-                                                   17950 + counter)
+                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0,
+                                                      int.from_bytes(binascii.unhexlify(i), byteorder="little"),
+                                                      17950 + counter)
                     print(new_name)
                     break
             elif len(new_name) == 0:
@@ -350,7 +353,7 @@ class P3RSave:
                     if len(binascii.hexlify(i.encode()).decode()) > 2:
                         aaa = False
                 if aaa:
-                    self.js[1]["value"] = self.SaveByName(self.js[1]["value"], "FirstName", 1, 1, new_name,
+                    self.js[1]["value"] = self.save_by_name(self.js[1]["value"], "FirstName", 1, 1, new_name,
                                                           "Int8Property", self.SaveHeader["LenFirstName"],
                                                           '{"type": "Int8Property", "name": name,"padding_static":static,"padding":self.int_to_hex(x_hex), "value": ord(nvar[c - 1])}')
                     self.SaveHeader["firstname"] = new_name
@@ -358,13 +361,13 @@ class P3RSave:
                     new_name = self.split_string(new_name, 8, True)
                     counter = 0
                     for i in [0, 0, 0, 0, 0, 0, 0, 0]:
-                        self.js = self.DelByNameN(self.js, "UInt32Property", 0, 17934 + counter)
+                        self.js = self.del_by_name_n(self.js, "UInt32Property", 0, 17934 + counter)
                     counter = 0
                     for i in new_name:
                         counter += 1
-                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0,
-                                                   int.from_bytes(binascii.unhexlify(i), byteorder="little"),
-                                                   17934 + counter)
+                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0,
+                                                      int.from_bytes(binascii.unhexlify(i), byteorder="little"),
+                                                      17934 + counter)
                     print(new_name)
                     break
             elif len(new_name) == 0:
@@ -392,9 +395,9 @@ class P3RSave:
                             else:
                                 try:
                                     z = int(z)
-                                    if z > 0 and z < 1000:
-                                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z,
-                                                                   self.Data["characters"][characters[int(a) - 1]][
+                                    if 0 < z < 1000:
+                                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z,
+                                                                      self.Data["characters"][characters[int(a) - 1]][
                                                                        "current_pv"])
                                         break
                                 except:
@@ -408,9 +411,9 @@ class P3RSave:
                             else:
                                 try:
                                     z = int(z)
-                                    if z > 0 and z < 1000:
-                                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z,
-                                                                   self.Data["characters"][characters[int(a) - 1]][
+                                    if 0 < z < 1000:
+                                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z,
+                                                                      self.Data["characters"][characters[int(a) - 1]][
                                                                        "current_pc"])
                                         break
                                 except:
@@ -423,12 +426,12 @@ class P3RSave:
                             else:
                                 try:
                                     z = int(z)
-                                    if z > 0 and z < 100:
+                                    if 0 < z < 100:
                                         if a == "1":
-                                            self.js[1]["value"] = self.SaveByName(self.js[1]["value"], "PlayerLevel", 0,
-                                                                                  1, z, "UInt32Property")
-                                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z,
-                                                                   self.Data["characters"][characters[int(a) - 1]][
+                                            self.js[1]["value"] = self.save_by_name(self.js[1]["value"], "PlayerLevel", 0,
+                                                                                    1, z, "UInt32Property")
+                                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z,
+                                                                      self.Data["characters"][characters[int(a) - 1]][
                                                                        "level"])
                                         break
                                 except:
@@ -442,8 +445,8 @@ class P3RSave:
                                 try:
                                     z = int(z)
                                     if z > 0 and z < 4294967296:
-                                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z,
-                                                                   self.Data["characters"][characters[int(a) - 1]][
+                                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z,
+                                                                      self.Data["characters"][characters[int(a) - 1]][
                                                                        "exp"])
                                         break
                                 except:
@@ -458,8 +461,8 @@ class P3RSave:
                         if len(av) == 2:
                             try:
                                 print("")
-                                print(self.LoadByNameN(self.js, "UInt32Property", 0,
-                                                       self.Data["characters"][characters[int(a) - 1]][av[1]]))
+                                print(self.load_by_name_n(self.js, "UInt32Property", 0,
+                                                          self.Data["characters"][characters[int(a) - 1]][av[1]]))
                             except Exception as e:
                                 pass
                     elif command == "back":
@@ -494,7 +497,7 @@ class P3RSave:
                     command = input(f"(type help to see comand) (Social-Link editing {bbc2}): ")
                     int("00000032", 16)
                     if command == "edit level":
-                        integer = self.LoadByNameN(self.js, "UInt32Property", 0, self.Data["sociallink"][bbc])
+                        integer = self.load_by_name_n(self.js, "UInt32Property", 0, self.Data["sociallink"][bbc])
                         if integer == None:
                             integer = 0
                         load = binascii.hexlify(int.to_bytes(integer, 4, byteorder="big")).decode()
@@ -509,26 +512,26 @@ class P3RSave:
                                         point_load = "0000"
                                     load = point_load + binascii.hexlify(
                                         int.to_bytes(new_level, 2, byteorder="big")).decode()
-                                    self.js = self.SaveByNameN(self.js, "UInt32Property", 0, int(load, 16),
-                                                               self.Data["sociallink"][bbc])
+                                    self.js = self.save_by_name_n(self.js, "UInt32Property", 0, int(load, 16),
+                                                                  self.Data["sociallink"][bbc])
                                 elif new_level == 0:
-                                    self.js = self.DelByNameN(self.js, "UInt32Property", 0,
-                                                              self.Data["sociallink"][bbc])
+                                    self.js = self.del_by_name_n(self.js, "UInt32Property", 0,
+                                                                 self.Data["sociallink"][bbc])
                                 new_bin = "0b"
                                 for iuesn in self.Data["sociallink"].values():
-                                    tempp = self.LoadByNameN(self.js, "UInt32Property", 0, iuesn)
+                                    tempp = self.load_by_name_n(self.js, "UInt32Property", 0, iuesn)
                                     if tempp != None and tempp > 0:
                                         new_bin += "1"
                                     else:
                                         new_bin += "0"
                                 new_bin = eval(new_bin)
-                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0, new_bin, 103)
+                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0, new_bin, 103)
                                 break
                             except:
                                 if new_level == "":
                                     break
                     elif command == "edit point":
-                        integer = self.LoadByNameN(self.js, "UInt32Property", 0, self.Data["sociallink"][bbc])
+                        integer = self.load_by_name_n(self.js, "UInt32Property", 0, self.Data["sociallink"][bbc])
                         if integer == None:
                             integer = 0
                         load = binascii.hexlify(int.to_bytes(integer, 4, byteorder="big")).decode()
@@ -542,8 +545,8 @@ class P3RSave:
                                     if int(level_load, 16) < 10 and int(level_load, 16) > 0:
                                         load = binascii.hexlify(
                                             int.to_bytes(new_point, 2, byteorder="big")).decode() + level_load
-                                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0, int(load, 16),
-                                                                   self.Data["sociallink"][bbc])
+                                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0, int(load, 16),
+                                                                      self.Data["sociallink"][bbc])
                                         break
                                     else:
                                         print("Can't edit point if relation level is 10 or 0")
@@ -556,7 +559,7 @@ class P3RSave:
                     elif command == "print":
                         print("level\npoints")
                     elif command == "get" or command[0:4] == "get ":
-                        integer = self.LoadByNameN(self.js, "UInt32Property", 0, self.Data["sociallink"][bbc])
+                        integer = self.load_by_name_n(self.js, "UInt32Property", 0, self.Data["sociallink"][bbc])
                         load = binascii.hexlify(int.to_bytes(integer, 4, byteorder="big")).decode()
                         level_load = load[4:len(load)]
                         point_load = load[0:4]
@@ -587,8 +590,8 @@ class P3RSave:
                         try:
                             z = int(z)
                             if z > 0 and z < 101:
-                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z,
-                                                           self.Data["socialrank"]["charm"])
+                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z,
+                                                              self.Data["socialrank"]["charm"])
                                 break
                         except:
                             pass
@@ -601,8 +604,8 @@ class P3RSave:
                         try:
                             z = int(z)
                             if z > 0 and z < 231:
-                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z,
-                                                           self.Data["socialrank"]["academics"])
+                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z,
+                                                              self.Data["socialrank"]["academics"])
                                 break
                         except:
                             pass
@@ -615,8 +618,8 @@ class P3RSave:
                         try:
                             z = int(z)
                             if z > 0 and z < 81:
-                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z,
-                                                           self.Data["socialrank"]["courage"])
+                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z,
+                                                              self.Data["socialrank"]["courage"])
                                 break
                         except:
                             pass
@@ -630,7 +633,7 @@ class P3RSave:
                 if len(av) == 2:
                     try:
                         print("")
-                        print(self.LoadByNameN(self.js, "UInt32Property", 0, self.Data["socialrank"][av[1]]))
+                        print(self.load_by_name_n(self.js, "UInt32Property", 0, self.Data["socialrank"][av[1]]))
                     except Exception as e:
                         pass
             elif command == "back":
@@ -646,8 +649,8 @@ class P3RSave:
                 play = input("New Playtime (max 107998200 | put nothing to cancel): ")
                 play = int(play)
                 if play >= 0 and play <= 107998200:
-                    self.js[1]["value"] = self.SaveByName(self.js[1]["value"], "PlayTime", 0, 1, play, "UInt32Property")
-                    self.js = self.SaveByNameN(self.js, "UInt32Property", 0, play, 12832)
+                    self.js[1]["value"] = self.save_by_name(self.js[1]["value"], "PlayTime", 0, 1, play, "UInt32Property")
+                    self.js = self.save_by_name_n(self.js, "UInt32Property", 0, play, 12832)
                     self.Data["playtime"] = play
                     print(play)
                     break
@@ -669,8 +672,8 @@ class P3RSave:
                     else:
                         try:
                             z = int(z)
-                            if z > 0 and z <= 4294967295:
-                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z, 5219)
+                            if 0 < z <= 4294967295:
+                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z, 5219)
                                 break
                         except:
                             pass
@@ -682,8 +685,8 @@ class P3RSave:
                     else:
                         try:
                             z = int(z)
-                            if z > 0 and z <= 4294967295:
-                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z, 5220)
+                            if 0 < z <= 4294967295:
+                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z, 5220)
                                 break
                         except:
                             pass
@@ -695,8 +698,8 @@ class P3RSave:
                     else:
                         try:
                             z = int(z)
-                            if z > 0 and z <= 4294967295:
-                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z, 5221)
+                            if 0 < z <= 4294967295:
+                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z, 5221)
                                 break
                         except:
                             pass
@@ -708,8 +711,8 @@ class P3RSave:
                     else:
                         try:
                             z = int(z)
-                            if z > 0 and z <= 4294967295:
-                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0, z, 5218)
+                            if 0 < z <= 4294967295:
+                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0, z, 5218)
                                 break
                         except:
                             pass
@@ -730,10 +733,10 @@ class P3RSave:
                 print("")
                 print(
                     f"back : to exit |dangerous editing\nprint : show editable value name\nedit 'value_name' : edit the value of 'value_name'\nget 'value_name' : get the value of 'value_name'")
-            self.Data["dangerous"] = {"player_x": self.LoadByNameN(self.js, "UInt32Property", 0, 5219),
-                                      "player_y": self.LoadByNameN(self.js, "UInt32Property", 0, 5220),
-                                      "player_z": self.LoadByNameN(self.js, "UInt32Property", 0, 5221),
-                                      "player_direction": self.LoadByNameN(self.js, "UInt32Property", 0, 5218)}
+            self.Data["dangerous"] = {"player_x": self.load_by_name_n(self.js, "UInt32Property", 0, 5219),
+                                      "player_y": self.load_by_name_n(self.js, "UInt32Property", 0, 5220),
+                                      "player_z": self.load_by_name_n(self.js, "UInt32Property", 0, 5221),
+                                      "player_direction": self.load_by_name_n(self.js, "UInt32Property", 0, 5218)}
 
     def Difficulty(self):
         difficultydata = {"Beginner": 2166366214, "Easy": 2166374406, "Normal": 2166390790, "Hard": 2166423558,
@@ -751,9 +754,9 @@ class P3RSave:
             else:
                 try:
                     ss = int(ss)
-                    if ss > 0 and ss <= 5:
-                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0,
-                                                   difficultydata[difficultychoose[ss - 1]], 384)
+                    if 0 < ss <= 5:
+                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0,
+                                                      difficultydata[difficultychoose[ss - 1]], 384)
                         break
                 except:
                     pass
@@ -788,8 +791,8 @@ class P3RSave:
                                     else:
                                         try:
                                             z2 = int(z2)
-                                            if (z == 2009 and (z2 > 0 and z2 < 10)) or (
-                                                    z == 2010 and (z2 > 0 and z2 < 4)):
+                                            if (z == 2009 and (0 < z2 < 10)) or (
+                                                    z == 2010 and (0 < z2 < 4)):
                                                 z2 -= 1
                                                 if z == 2010:
                                                     z2 += 9
@@ -805,12 +808,12 @@ class P3RSave:
                                                     else:
                                                         try:
                                                             item = int(item)
-                                                            if (item > 0 and item <= daydata[0][z2]):
+                                                            if 0 < item <= daydata[0][z2]:
                                                                 item = (offset + item) - 1
-                                                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0,
-                                                                                           item, 1928)
-                                                                self.js = self.SaveByNameN(self.js, "UInt32Property", 0,
-                                                                                           item, 1930)
+                                                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0,
+                                                                                              item, 1928)
+                                                                self.js = self.save_by_name_n(self.js, "UInt32Property", 0,
+                                                                                              item, 1930)
                                                                 break
                                                         except:
                                                             pass
@@ -828,9 +831,9 @@ class P3RSave:
                     z = input()
                     try:
                         z = int(z)
-                        if z > 0 and z < 10:
-                            self.js = self.SaveByNameN(self.js, "UInt32Property", 0, timedata[z - 1][1],
-                                                       self.Data["date"]["time"])
+                        if 0 < z < 10:
+                            self.js = self.save_by_name_n(self.js, "UInt32Property", 0, timedata[z - 1][1],
+                                                          self.Data["date"]["time"])
                             break
                     except:
                         try:
@@ -848,10 +851,10 @@ class P3RSave:
                         print("")
                         if av[1] == "time":
                             print(timedata[
-                                      (self.LoadByNameN(self.js, "UInt32Property", 0, self.Data["date"][av[1]]) - 257)][
+                                      (self.load_by_name_n(self.js, "UInt32Property", 0, self.Data["date"][av[1]]) - 257)][
                                       0])
                         else:
-                            print(self.LoadByNameN(self.js, "UInt32Property", 0, self.Data["date"][av[1]]))
+                            print(self.load_by_name_n(self.js, "UInt32Property", 0, self.Data["date"][av[1]]))
                     except Exception as e:
                         pass
             elif command == "back":
@@ -869,10 +872,10 @@ class P3RSave:
             try:
                 answer = input("Choose personas slot (1-6) (put nothing to cancel): ")
                 answer = int(answer)
-                if answer >= 1 and answer <= 6:
+                if 1 <= answer <= 6:
                     while True:
                         command = input(f"(type help to see comand) (Personas slot {answer} editing): ").lower()
-                        if command == None:
+                        if command is None:
                             pass
                         elif command == "edit persona":
                             while True:
@@ -884,13 +887,13 @@ class P3RSave:
                                 persona_answer = input("")
                                 try:
                                     persona_answer = int(persona_answer)
-                                    if persona_answer > 0 and persona_answer <= len(personaid) and \
+                                    if 0 < persona_answer <= len(personaid) and \
                                             personaid[persona_answer - 1][1] != -1:
                                         personas_new_value = int.from_bytes(binascii.unhexlify(
                                             (personaid[persona_answer - 1][1]).to_bytes(2,
                                                                                         byteorder='little').hex() + "01"),
                                             byteorder="big")
-                                    elif persona_answer > 0 and persona_answer <= len(personaid):
+                                    elif 0 < persona_answer <= len(personaid):
                                         while True:
                                             persona_input_id = input(
                                                 "Persona ID (put nothing to cancle) (bad Persona ID could crash the game): ")
@@ -898,8 +901,8 @@ class P3RSave:
                                                 persona_input_id = int(persona_input_id)
                                                 if persona_input_id >= 0:
                                                     personas_new_value = int.from_bytes(binascii.unhexlify(
-                                                        (persona_input_id).to_bytes(2,
-                                                                                    byteorder='little').hex() + "01"),
+                                                        persona_input_id.to_bytes(2,
+                                                                                  byteorder='little').hex() + "01"),
                                                         byteorder="big")
                                                     break
                                             except:
@@ -908,14 +911,14 @@ class P3RSave:
                                     verify_bool = False
                                     for verify in self.Data["personavalueid"]["persona"]:
                                         if verify != self.Data["personavalueid"]["persona"][answer - 1]:
-                                            if self.LoadByNameN(self.js, "UInt32Property", 0,
-                                                                verify) == personas_new_value:
+                                            if self.load_by_name_n(self.js, "UInt32Property", 0,
+                                                                   verify) == personas_new_value:
                                                 verify_bool = True
-                                    if verify_bool == False:
-                                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0, personas_new_value,
-                                                                   self.Data["personavalueid"]["persona"][answer - 1])
+                                    if not verify_bool:
+                                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0, personas_new_value,
+                                                                      self.Data["personavalueid"]["persona"][answer - 1])
                                         break
-                                    elif verify_bool == True:
+                                    elif verify_bool:
                                         print("\n\nCan't have double persona")
                                 except Exception as e:
                                     if persona_answer == "":
@@ -925,9 +928,9 @@ class P3RSave:
                                 new_level = input("Choose persona's level (99 max) (put nothing to cancel): ")
                                 try:
                                     new_level = int(new_level)
-                                    if new_level > 0 and new_level <= 99:
-                                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0, new_level,
-                                                                   self.Data["personavalueid"]["level"][answer - 1])
+                                    if 0 < new_level <= 99:
+                                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0, new_level,
+                                                                      self.Data["personavalueid"]["level"][answer - 1])
                                         break
                                 except Exception as e:
                                     print(e)
@@ -938,9 +941,9 @@ class P3RSave:
                                 new_exp = input("Choose persona's exp (4294967295 max) (put nothing to cancel): ")
                                 try:
                                     new_exp = int(new_exp)
-                                    if new_exp > 0 and new_exp <= 4294967295:
-                                        self.js = self.SaveByNameN(self.js, "UInt32Property", 0, new_exp,
-                                                                   self.Data["personavalueid"]["exp"][answer - 1])
+                                    if 0 < new_exp <= 4294967295:
+                                        self.js = self.save_by_name_n(self.js, "UInt32Property", 0, new_exp,
+                                                                      self.Data["personavalueid"]["exp"][answer - 1])
                                         break
                                 except:
                                     if new_exp == "":
@@ -952,8 +955,8 @@ class P3RSave:
                                 for skill_i in skill_process:
                                     if skill_i == "skill_slot_4":
                                         pass
-                                    skill_tmp = self.LoadByNameN(self.js, "UInt32Property", 0,
-                                                                 self.Data["personavalueid"][skill_i][answer - 1])
+                                    skill_tmp = self.load_by_name_n(self.js, "UInt32Property", 0,
+                                                                    self.Data["personavalueid"][skill_i][answer - 1])
                                     skill_tmp = binascii.hexlify(int.to_bytes(skill_tmp, 4, byteorder="big")).decode()
                                     if skill_tmp[0:4] != "0000":
                                         skill_list.append(int(skill_tmp[0:4], 16))
@@ -973,15 +976,16 @@ class P3RSave:
                                         print(f"    {counter} : {iss}")
                                 command2 = input("Add or Del skill: ")
                                 try:
-                                    if command2.split(" ")[0].lower() == "del":
-                                        if len(command2.split(" ")) > 1:
-                                            if int(command2.split(" ")[1]) > 0 and int(command2.split(" ")[1]) <= len(
-                                                    skill_list):
+                                    if command2.lower().startswith("del"):
+                                        commandsub = command2.split(" ")
+                                        if len(commandsub) > 1:
+                                            command_value = int(commandsub[1])
+                                            if 0 < command_value <= len(skill_list):
                                                 counter2 = 0
                                                 lenn = len(skill_list)
                                                 for ibn in range(lenn):
                                                     counter2 += 1
-                                                    if counter2 == int(command2.split(" ")[1]):
+                                                    if counter2 == command_value:
                                                         del skill_list[ibn]
                                                         break
                                     elif command2 == "add" and len(skill_list) < 8:
@@ -993,7 +997,7 @@ class P3RSave:
                                             skill2_answer = input()
                                             try:
                                                 skill2_answer = int(skill2_answer)
-                                                if skill2_answer > 0 and skill2_answer <= len(skillid):
+                                                if 0 < skill2_answer <= len(skillid):
                                                     if skillid[skill2_answer - 1][1] > -1:
                                                         skill_list.append(skillid[skill2_answer - 1][1])
                                                     else:
@@ -1023,47 +1027,47 @@ class P3RSave:
                                         for iuio in skill_list:
                                             counter += 1
                                             if counter < 3:
-                                                val1 += (iuio).to_bytes(2, byteorder='big').hex()
+                                                val1 += iuio.to_bytes(2, byteorder='big').hex()
                                             elif counter < 5:
-                                                val2 += (iuio).to_bytes(2, byteorder='big').hex()
+                                                val2 += iuio.to_bytes(2, byteorder='big').hex()
                                             elif counter < 7:
-                                                val3 += (iuio).to_bytes(2, byteorder='big').hex()
+                                                val3 += iuio.to_bytes(2, byteorder='big').hex()
                                             else:
-                                                val4 += (iuio).to_bytes(2, byteorder='big').hex()
+                                                val4 += iuio.to_bytes(2, byteorder='big').hex()
 
                                         if val1 != "":
-                                            self.js = self.SaveByNameN(self.js, "UInt32Property", 0, int(val1, 16),
-                                                                       self.Data["personavalueid"]["skill_slot_1"][
+                                            self.js = self.save_by_name_n(self.js, "UInt32Property", 0, int(val1, 16),
+                                                                          self.Data["personavalueid"]["skill_slot_1"][
                                                                            answer - 1])
                                         else:
-                                            self.js = self.DelByNameN(self.js, "UInt32Property", 0,
-                                                                      self.Data["personavalueid"]["skill_slot_1"][
+                                            self.js = self.del_by_name_n(self.js, "UInt32Property", 0,
+                                                                         self.Data["personavalueid"]["skill_slot_1"][
                                                                           answer - 1])
                                         if val2 != "":
-                                            self.js = self.SaveByNameN(self.js, "UInt32Property", 0, int(val2, 16),
-                                                                       self.Data["personavalueid"]["skill_slot_2"][
+                                            self.js = self.save_by_name_n(self.js, "UInt32Property", 0, int(val2, 16),
+                                                                          self.Data["personavalueid"]["skill_slot_2"][
                                                                            answer - 1])
                                         else:
-                                            self.js = self.DelByNameN(self.js, "UInt32Property", 0,
-                                                                      self.Data["personavalueid"]["skill_slot_2"][
+                                            self.js = self.del_by_name_n(self.js, "UInt32Property", 0,
+                                                                         self.Data["personavalueid"]["skill_slot_2"][
                                                                           answer - 1])
                                         if val3 != "":
-                                            self.js = self.SaveByNameN(self.js, "UInt32Property", 0, int(val3, 16),
-                                                                       self.Data["personavalueid"]["skill_slot_3"][
+                                            self.js = self.save_by_name_n(self.js, "UInt32Property", 0, int(val3, 16),
+                                                                          self.Data["personavalueid"]["skill_slot_3"][
                                                                            answer - 1])
                                         else:
-                                            self.js = self.DelByNameN(self.js, "UInt32Property", 0,
-                                                                      self.Data["personavalueid"]["skill_slot_3"][
+                                            self.js = self.del_by_name_n(self.js, "UInt32Property", 0,
+                                                                         self.Data["personavalueid"]["skill_slot_3"][
                                                                           answer - 1])
                                         if val4 != "":
                                             print(True)
-                                            self.js = self.SaveByNameN(self.js, "UInt32Property", 0, int(val4, 16),
-                                                                       self.Data["personavalueid"]["skill_slot_4"][
+                                            self.js = self.save_by_name_n(self.js, "UInt32Property", 0, int(val4, 16),
+                                                                          self.Data["personavalueid"]["skill_slot_4"][
                                                                            answer - 1])
                                             print(False)
                                         else:
-                                            self.js = self.DelByNameN(self.js, "UInt32Property", 0,
-                                                                      self.Data["personavalueid"]["skill_slot_4"][
+                                            self.js = self.del_by_name_n(self.js, "UInt32Property", 0,
+                                                                         self.Data["personavalueid"]["skill_slot_4"][
                                                                           answer - 1])
                                         break
                                 except:
@@ -1077,33 +1081,33 @@ class P3RSave:
                                     inputt = input(f"Set new {inns} (max 99): ")
                                     try:
                                         inputt = int(inputt)
-                                        if inputt > 0 and inputt < 100:
+                                        if 0 < inputt < 100:
                                             if inns == "Ch":
-                                                ch = self.js = self.SaveByNameN(self.js, "UInt32Property", 0, inputt,
-                                                                                self.Data["personavalueid"]["ch"][
+                                                ch = self.js = self.save_by_name_n(self.js, "UInt32Property", 0, inputt,
+                                                                                   self.Data["personavalueid"]["ch"][
                                                                                     answer - 1])
                                                 break
                                             else:
-                                                fomaenag += (inputt).to_bytes(1, byteorder='little').hex()
+                                                fomaenag += inputt.to_bytes(1, byteorder='little').hex()
                                                 break
                                     except:
                                         pass
 
-                            self.js = self.SaveByNameN(self.js, "UInt32Property", 0,
-                                                       int.from_bytes(binascii.unhexlify(fomaenag), byteorder="big"),
-                                                       self.Data["personavalueid"]["fo_ma_en_ag"][answer - 1])
+                            self.js = self.save_by_name_n(self.js, "UInt32Property", 0,
+                                                          int.from_bytes(binascii.unhexlify(fomaenag), byteorder="big"),
+                                                          self.Data["personavalueid"]["fo_ma_en_ag"][answer - 1])
 
                         elif command == "print":
                             print("")
                             stat_show = False
                             skill_show = False
                             for i in self.Data["personavalueid"].keys():
-                                if (i == "fo_ma_en_ag" or i == "ch"):
-                                    if (stat_show == False):
+                                if i == "fo_ma_en_ag" or i == "ch":
+                                    if not stat_show:
                                         print("stats")
                                         stat_show = True
-                                elif ("skill_slot_" in i):
-                                    if (skill_show == False):
+                                elif "skill_slot_" in i:
+                                    if not skill_show:
                                         print("skill")
                                         skill_show = True
                                 else:
@@ -1124,7 +1128,7 @@ class P3RSave:
                 new_name = input("New Money (9999999 max | put nothing to cancel): ")
                 new_name = int(new_name)
                 if 0 <= new_name <= 9999999:
-                    self.js = self.SaveByNameN(self.js, "UInt32Property", 0, new_name, 7261)
+                    self.js = self.save_by_name_n(self.js, "UInt32Property", 0, new_name, 7261)
                     self.Data["money"] = new_name
                     print(new_name)
                     break
