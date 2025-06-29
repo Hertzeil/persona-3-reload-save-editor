@@ -1,32 +1,22 @@
-import os, sys, logging
+import os, sys
 
-from P3REditor.opensave import OpenSave
+from P3REditor.p3rsaveold import P3RSave
+from P3REditor.prompt import Prompt
+from P3REditor.savemanager import SaveManager
 
 
 def process_save_file():
     if len(sys.argv) > 1:
-        try:
-            a = sys.argv[1].replace('"', "")
-            a = OpenSave().load(os.path.split(os.path.abspath(a))[0], 0, os.path.split(os.path.abspath(a))[1], True)
-        except FileNotFoundError:
-            raise FileNotFoundError("Bad path\n")
-        except PermissionError:
-            raise FileNotFoundError("Permission error or Bad path error\n")
-        except Exception as e:
-            if "Failed to read HeaderProperty" in str(e):
-                raise Exception("Invalid file format (not Persona 3 Reload GVAS)")
+        target = sys.argv[1]
     else:
-        while True:
-            try:
-                a = input("Persona3 Reload sav path : ").replace('"', "")
-                if a == "exit" or a == "quit":
-                    sys.exit()
-                else:
-                    OpenSave().load(os.path.split(os.path.abspath(a))[0], 0, os.path.split(os.path.abspath(a))[1], True)
-            except FileNotFoundError:
-                logging.error("Bad path\n")
-            except PermissionError:
-                logging.error("Permission error or Bad path error\n")
-            except Exception as e:
-                if "Failed to read HeaderProperty" in str(e):
-                    raise Exception("Invalid file format (not Persona 3 Reload GVAS)")
+        target = input("Type the Persona3 file name (must be located in this folder) :")
+    if os.path.exists(target):
+        save_manager = SaveManager()
+        p3rsave = save_manager.load(target)
+        prompt = Prompt(p3rsave, save_manager)
+        prompt.run()
+
+
+
+    else:
+        raise FileNotFoundError("File not found")
