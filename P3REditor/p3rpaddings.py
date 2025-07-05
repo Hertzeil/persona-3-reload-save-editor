@@ -8,8 +8,10 @@ class P3RPaddings:
     money = 7257
     playtime = 12832
     # mc
-    firstname = 17934
-    lastname = 17950
+    #firstname = 17934
+    firstname = 17936
+    #lastname = 17950
+    lastname = 17952
     mc_current_pv = 13070
     mc_current_pc = 13071
     mc_level = 13074

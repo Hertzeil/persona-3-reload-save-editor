@@ -17,6 +17,7 @@ class Prompt:
             'get': self.get_attribute,
             'set': self.set_attribute,
             'read': self.read_address,
+            'write': self.write_address
         }
         self.get_attributes = {
             'save_slot_name': self.p3rsave.get_save_slot_name,
@@ -84,6 +85,12 @@ class Prompt:
             print('Value at address' + str(address) + ': ' + str(value))
         except:
             print('Address not found')
+    def write_address(self, address):
+        try:
+            new_value = input('Enter new value: ')
+            self.p3rsave.set_value(int(address), int(new_value))
+        except:
+            print('Cant write !')
 
     def save(self):
         self.savemanager.save(self.p3rsave)

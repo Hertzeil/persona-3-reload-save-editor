@@ -30,14 +30,19 @@ class P3RSave:
         return ''.join(map(chr, firstname))
         '''
         firstname = []
-        for i in range(0, 7):
+        for i in range(0, 2):
             firstname.append(self.get_value(P3RPaddings.firstname + i))
-        return ''.join(map(chr, firstname))
+        return self.int_list_to_string(firstname)
 
     def set_firstname(self, value):
         self.set_gameheadder_string('FirstName', value)
+        to_int = self.string_to_int_list(value)
+        for i in range(0, 2):
+            to_insert = to_int[i] if i < len(to_int) else 0
+            self.set_value(P3RPaddings.firstname + i, to_insert)
 
     def get_lastname(self):
+        '''
         lastname = []
         path = [1, "value"]
         objs = get_object_by_path(self.json_obj, path)
@@ -45,16 +50,24 @@ class P3RSave:
             if obj["type"] == "Int8Property" and obj['name'] == 'LastName':
                 lastname.append(obj['value'])
         return ''.join(map(chr, lastname))
+        '''
+        lastname = []
+        for i in range(0, 2):
+            lastname.append(self.get_value(P3RPaddings.lastname + i))
+        return self.int_list_to_string(lastname)
 
     def set_lastname(self, value):
         self.set_gameheadder_string('LastName', value)
-
+        to_int = self.string_to_int_list(value)
+        for i in range(0, 2):
+            to_insert = to_int[i] if i < len(to_int) else 0
+            self.set_value(P3RPaddings.lastname + i, to_insert)
 
     def get_money(self):
         return str(self.get_value(P3RPaddings.money))
 
     def set_money(self, value):
-        self.set_value(P3RPaddings.money, value)
+        self.set_value(P3RPaddings.money, int(value))
 
     # Utils functions
 
@@ -110,4 +123,27 @@ class P3RSave:
             if obj['type'] == "UInt32Property" and obj['name'] == "SaveDataArea":
                 if int.from_bytes(binascii.unhexlify(obj['padding']), byteorder="little") ==  padding + self.offset:
                     obj['value'] = new_value
+                    return
         raise Exception("Value not found")
+
+    def string_to_int_list(self, s):
+        b = s.encode("ascii")
+        byte_length = len(b)
+        if byte_length % 4 != 0:
+            padding = 4 - (byte_length % 4)
+            b += b'\x00' * padding
+
+        int_list = []
+        for i in range(0, byte_length, 4):
+            chunk = b[i:i + 4]
+            int_list.append(int.from_bytes(chunk, byteorder="little"))
+
+        return int_list
+
+    def int_list_to_string(self, int_list):
+        all_bytes = b''.join(
+            i.to_bytes(4, byteorder="little") for i in int_list
+        )
+        s = all_bytes.decode("ascii")
+        s = s.rstrip('\x00')
+        return s
