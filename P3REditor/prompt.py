@@ -1,9 +1,5 @@
-import json
-import tempfile
-
 from P3REditor.p3rsave import P3RSave
 from P3REditor.savemanager import SaveManager
-from SavConverter import print_json
 
 
 class Prompt:
@@ -13,7 +9,6 @@ class Prompt:
         self.savemanager = savemanager
         self.base_commands = {
             'save': self.save,
-            'json': self.json,
             'help': self.print_usage,
             'exit': self.quit,
             'quit': self.quit
@@ -21,6 +16,19 @@ class Prompt:
         self.arg_commands = {
             'get': self.get_attribute,
             'set': self.set_attribute,
+            'read': self.read_address,
+        }
+        self.get_attributes = {
+            'save_slot_name': self.p3rsave.get_save_slot_name,
+            'save_game_version': self.p3rsave.get_save_game_version,
+            'firstname': self.p3rsave.get_firstname,
+            'lastname': self.p3rsave.get_lastname,
+            'money': self.p3rsave.get_money,
+        }
+        self.set_attributes = {
+            'firstname': self.p3rsave.set_firstname,
+            'lastname': self.p3rsave.set_lastname,
+            'money': self.p3rsave.set_money,
         }
 
     def run(self):
@@ -30,11 +38,17 @@ class Prompt:
             command = input('P3REditor> ').lower()
             command_detail = command.split(' ')
             if len(command_detail) == 1:
-                self.base_commands[command_detail[0]]()
+                if command_detail[0] in self.base_commands:
+                    self.base_commands[command_detail[0]]()
+                else:
+                    print('Unknown command')
             elif len(command_detail) == 2:
-                self.arg_commands[command_detail[0]](command_detail[1])
+                if command_detail[0] in self.arg_commands:
+                    self.arg_commands[command_detail[0]](command_detail[1])
+                else:
+                    print('Unknown command')
             else:
-                print('Command not recognised')
+                print('Unknown command')
                 self.print_usage()
 
     def print_usage(self):
@@ -51,32 +65,25 @@ class Prompt:
         self._listen_input = False
 
     def get_attribute(self, element_name):
-        if element_name == 'save_slot_name' :
-            obj = self.p3rsave.get_save_slot_name()
-        elif element_name == 'save_game_version' :
-            obj = self.p3rsave.get_save_game_version()
-        elif element_name == 'firstname':
-            obj = self.p3rsave.get_firstname()
-        elif element_name == 'lastname':
-            obj = self.p3rsave.get_lastname()
+        if element_name in self.get_attributes:
+            obj = self.get_attributes[element_name]()
+            print("current value : " + obj)
         else:
-            obj = ''
-        print("current value : " + obj)
+            print('Unknown attribute')
 
     def set_attribute(self, element_name):
-        new_value = input('Enter new value: ')
-        if element_name == 'firstname':
-            self.p3rsave.set_firstname(new_value)
-        elif element_name == 'lastname':
-            self.p3rsave.set_lastname(new_value)
-    def json(self):
-        '''
-        with tempfile.NamedTemporaryFile(mode="wb", suffix=".json") as f:
-            json.dump(self.p3rsave.json_obj, f, indent=2)
-            temp_file_path = f.name
-            f.flush()
-            print(temp_file_path)
-        '''
-        print_json(self.p3rsave.json_obj)
+        if element_name in self.set_attributes:
+            new_value = input('Enter new value: ')
+            self.set_attributes[element_name](new_value)
+        else:
+            print('Unknown attribute')
+
+    def read_address(self, address):
+        try:
+            value = self.p3rsave.get_value(int(address))
+            print('Value at address' + str(address) + ': ' + str(value))
+        except:
+            print('Address not found')
+
     def save(self):
         self.savemanager.save(self.p3rsave)
