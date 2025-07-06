@@ -59,6 +59,8 @@ class Prompt:
     print : show editable value
     edit 'value_name' : edit the value of 'value_name'
     get 'value_name' : get the value of 'value_name'
+    read 'address' : try to read raw value at specified 'address'
+    write 'address' : write raw value at specified 'address'
             """)
 
     def quit(self):
